@@ -15,6 +15,7 @@
 package index
 
 import (
+	"github.com/operator-framework/audit/cmd/index/capabilities"
 	"github.com/spf13/cobra"
 
 	"github.com/operator-framework/audit/cmd/index/bundles"
@@ -29,6 +30,7 @@ func NewCmd() *cobra.Command {
 
 	indexCmd.AddCommand(
 		bundles.NewCmd(),
+		capabilities.NewCmd(),
 	)
 
 	return indexCmd
