@@ -17,15 +17,16 @@ package capabilities
 import (
 	"database/sql"
 	"fmt"
+	"os"
+	"os/exec"
+	"strings"
+
 	"github.com/operator-framework/audit/pkg"
 	"github.com/operator-framework/audit/pkg/actions"
 	"github.com/operator-framework/audit/pkg/models"
 	index "github.com/operator-framework/audit/pkg/reports/capabilities"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"os"
-	"os/exec"
-	"strings"
 )
 
 var flags = index.BindFlags{}
@@ -159,7 +160,7 @@ func run(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, bundle := range report.AuditBundle {
-		operatorsdk := exec.Command("operator-sdk", "run", "bundle", bundle.OperatorBundleImagePath)
+		operatorsdk := exec.Command("operator-sdk", "run", "bundle", bundle.OperatorBundleImagePath, "--namespace", "openshift-operator-lifecycle-manager", "--pull-secret-name", "registry-redhat-dockerconfig", "--timeout", "15m")
 		_, err = pkg.RunCommand(operatorsdk)
 		if err != nil {
 			log.Errorf("Unable to run operator-sdk: %v\n", err)
