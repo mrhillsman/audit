@@ -20,10 +20,11 @@ import (
 	"github.com/operator-framework/audit/pkg"
 	"github.com/operator-framework/audit/pkg/actions"
 	"github.com/operator-framework/audit/pkg/models"
-	index "github.com/operator-framework/audit/pkg/reports/bundles"
+	index "github.com/operator-framework/audit/pkg/reports/capabilities"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -76,6 +77,15 @@ func NewCmd() *cobra.Command {
 		fmt.Sprintf("specifies the container tool to use. If not set, the default value is docker. "+
 			"Note that you can use the environment variable CONTAINER_ENGINE to inform this option. "+
 			"[Options: %s and %s]", pkg.Docker, pkg.Podman))
+	// TODO: set defaults (if required) and help text
+	// TODO: how do we handle kubeconfig environment variable
+	cmd.Flags().StringVar(&flags.InstallMode, "install-mode", "", "")
+	cmd.Flags().StringVar(&flags.KubeConfig, "kubeconfig", "", "")
+	cmd.Flags().StringVar(&flags.Namespace, "namespace", "", "")
+	cmd.Flags().StringVar(&flags.PullSecretName, "pull-secret-name", "", "")
+	cmd.Flags().StringVar(&flags.ServiceAccount, "service-account", "", "")
+	cmd.Flags().StringVar(&flags.Timeout, "timeout", "", "")
+	cmd.Flags().StringVar(&flags.SkipTLS, "skip-tls", "", "")
 
 	return cmd
 }
@@ -127,11 +137,6 @@ func validation(cmd *cobra.Command, args []string) error {
 
 func run(cmd *cobra.Command, args []string) error {
 	log.Info("Running capabilities run function")
-	//operatorsdk := exec.Command("operator-sdk", "version")
-	//result, err := pkg.RunCommand(operatorsdk)
-	//if err != nil {
-	//	log.Errorf("Unable to run operator-sdk: %v\n", err)
-	//}
 
 	reportData := index.Data{}
 	reportData.Flags = flags
@@ -154,7 +159,11 @@ func run(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, bundle := range report.AuditBundle {
-		log.Infof("%+v\n", bundle.DefaultChannel)
+		operatorsdk := exec.Command("operator-sdk", "run", "bundle", bundle.OperatorBundleImagePath)
+		_, err = pkg.RunCommand(operatorsdk)
+		if err != nil {
+			log.Errorf("Unable to run operator-sdk: %v\n", err)
+		}
 	}
 
 	return nil
