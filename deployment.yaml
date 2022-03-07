@@ -6,7 +6,7 @@ spec:
   selector:
     matchLabels:
       app: audit-tool
-  replicas: 1 # tells deployment to run 2 pods matching the template
+  replicas: 1
   template:
     metadata:
       labels:
@@ -14,13 +14,15 @@ spec:
     spec:
       containers:
       - name: audit-tool
-        image: quay.io/opdev/audit-tool:v0.0.2
+        image: quay.io/opdev/audit-tool:v0.0.3
         args: ["index","capabilities","--container-engine","podman","--output-path","/opt/audit-tool","--limit","1","--index-image","registry.redhat.io/redhat/certified-operator-index:v4.9"]
         securityContext:
           privileged: true
         volumeMounts:
         - name: docker-config
           mountPath: /opt/audit-tool/.docker/
+        - name: kube-config
+          mountPath: /opt/audit-tool/.kube/
       volumes:
         - name: docker-config
           secret:
@@ -28,3 +30,9 @@ spec:
             items:
               - key: .dockerconfigjson
                 path: config.json
+        - name: kube-config
+          secret:
+            secretName: kube-config-secret
+            items:
+              - key: kubeconfig
+                path: config
