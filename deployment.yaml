@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audit-tool-deployment
+spec:
+  selector:
+    matchLabels:
+      app: audit-tool
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: audit-tool
+    spec:
+      containers:
+      - name: audit-tool
+        image: quay.io/opdev/audit-tool:v0.0.2
+        args: ["index","capabilities","--container-engine","podman","--output-path","/opt/audit-tool","--limit","1","--index-image","registry.redhat.io/redhat/certified-operator-index:v4.9"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: docker-config
+          mountPath: /opt/audit-tool/.docker/
+      volumes:
+        - name: docker-config
+          secret:
+            secretName: registry-redhat-dockerconfig
+            items:
+              - key: .dockerconfigjson
+                path: config.json

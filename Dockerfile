@@ -15,7 +15,6 @@ COPY . .
 
 # Build
 RUN GOOS=linux GOARCH=$TARGETARCH go build -a -o build/audit-tool cmd/main.go
-
 # Final image.
 FROM registry.access.redhat.com/ubi8/ubi
 
@@ -25,6 +24,8 @@ ENV HOME=/opt/audit-tool \
 
 RUN echo "${USER_NAME}:x:${USER_UID}:0:${USER_NAME} user:${HOME}:/sbin/nologin" >> /etc/passwd
 RUN dnf install -y podman
+RUN curl -o /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-isv https://www.redhat.com/security/data/55A34A82.txt
+COPY policy.json /etc/containers/policy.json
 
 WORKDIR ${HOME}
 
