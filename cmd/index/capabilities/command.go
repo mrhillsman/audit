@@ -159,8 +159,8 @@ func run(cmd *cobra.Command, args []string) error {
 		log.Errorf("Unable to get data from index db: %v\n", err)
 	}
 
-	for _, bundle := range report.AuditBundle {
-		operatorsdk := exec.Command("operator-sdk", "run", "bundle", bundle.OperatorBundleImagePath, "--namespace", "openshift-operator-lifecycle-manager", "--pull-secret-name", "registry-redhat-dockerconfig", "--timeout", "15m")
+	for _, _ = range report.AuditBundle {
+		operatorsdk := exec.Command("operator-sdk", "run", "bundle", "registry.connect.redhat.com/enterprisedb/cloud-native-postgresql@sha256:d310ece2a75b00bb3da9044f7e4420e199c150be3c7bca6f55c1d99ac1bb6d0d", "--pull-secret-name", "registry-redhat-dockerconfig", "--timeout", "5m")
 		_, err = pkg.RunCommand(operatorsdk)
 		if err != nil {
 			log.Errorf("Unable to run operator-sdk: %v\n", err)

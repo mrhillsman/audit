@@ -7,7 +7,7 @@ spec:
     spec:
       containers:
       - name: audit-tool
-        image: quay.io/opdev/audit-tool:v0.0.5
+        image: quay.io/opdev/audit-tool:v0.0.7
         args: ["index","capabilities","--container-engine","podman","--output-path","/opt/audit-tool","--limit","1","--index-image","registry.redhat.io/redhat/certified-operator-index:v4.9"]
         securityContext:
           privileged: true
