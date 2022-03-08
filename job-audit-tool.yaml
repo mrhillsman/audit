@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: audit-tool-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: audit-tool
+        image: quay.io/opdev/audit-tool:v0.0.5
+        args: ["index","capabilities","--container-engine","podman","--output-path","/opt/audit-tool","--limit","1","--index-image","registry.redhat.io/redhat/certified-operator-index:v4.9"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: docker-config
+          mountPath: /opt/audit-tool/.docker/
+        - name: kube-config
+          mountPath: /opt/audit-tool/.kube/
+      volumes:
+        - name: docker-config
+          secret:
+            secretName: registry-redhat-dockerconfig
+            items:
+              - key: .dockerconfigjson
+                path: config.json
+        - name: kube-config
+          secret:
+            secretName: kube-config-secret
+            items:
+              - key: kubeconfig
+                path: config
+      restartPolicy: Never
