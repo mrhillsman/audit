@@ -17,6 +17,6 @@
 
 # ignore json reports generate locally in the testdata reports
 **bundles_*.json
-
+**capabilities_*.json
 # skip files used locally that cannot be commited
 **/testdata/reports/**/validator/**

@@ -2,15 +2,60 @@ package capabilities
 
 import (
 	"fmt"
+	"sort"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/operator-framework/audit/pkg"
 	"github.com/operator-framework/audit/pkg/models"
+	log "github.com/sirupsen/logrus"
 )
 
 type Data struct {
-	AuditBundle       []models.AuditBundle
+	AuditCapabilities []models.AuditCapabilities
 	Flags             BindFlags
 	IndexImageInspect pkg.DockerInspect
+}
+
+func (d *Data) PrepareReport() Report {
+
+	var allColumns []Column
+	for _, v := range d.AuditCapabilities {
+		col := NewColumn(v)
+
+		allColumns = append(allColumns, *col)
+	}
+
+	sort.Slice(allColumns[:], func(i, j int) bool {
+		return allColumns[i].PackageName < allColumns[j].PackageName
+	})
+
+	finalReport := Report{}
+	finalReport.Flags = d.Flags
+	finalReport.Columns = allColumns
+
+	dt := time.Now().Format("2006-01-02")
+	finalReport.GenerateAt = dt
+
+	if len(allColumns) == 0 {
+		log.Fatal("No data was found for the criteria informed. " +
+			"Please, ensure that you provide valid information.")
+	}
+
+	return finalReport
+}
+
+func (d *Data) OutputReport() error {
+	report := d.PrepareReport()
+	switch d.Flags.OutputFormat {
+	case pkg.JSON:
+		if err := report.writeJSON(); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("invalid output format : %s", d.Flags.OutputFormat)
+	}
+	return nil
 }
 
 func (d *Data) BuildCapabilitiesQuery() (string, error) {

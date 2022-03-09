@@ -23,7 +23,7 @@ import (
 )
 
 // AuditBundle defines the data per bundle which is gathering to generate the reports
-type AuditBundle struct {
+type AuditCapabilities struct {
 	Bundle                  *apimanifests.Bundle
 	FoundLabel              bool
 	OperatorBundleName      string
@@ -43,9 +43,9 @@ type AuditBundle struct {
 	Capabilities            bool
 }
 
-func NewAuditBundle(operatorBundleName, operatorBundleImagePath string) *AuditBundle {
-	auditBundle := AuditBundle{}
-	auditBundle.OperatorBundleName = operatorBundleName
-	auditBundle.OperatorBundleImagePath = operatorBundleImagePath
-	return &auditBundle
+func NewAuditCapabilities(operatorBundleName, operatorBundleImagePath string) *AuditCapabilities {
+	auditCapabilities := AuditCapabilities{}
+	auditCapabilities.OperatorBundleName = operatorBundleName
+	auditCapabilities.OperatorBundleImagePath = operatorBundleImagePath
+	return &auditCapabilities
 }

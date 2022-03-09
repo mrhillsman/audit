@@ -159,12 +159,27 @@ func run(cmd *cobra.Command, args []string) error {
 		log.Errorf("Unable to get data from index db: %v\n", err)
 	}
 
-	for _, _ = range report.AuditBundle {
-		operatorsdk := exec.Command("operator-sdk", "run", "bundle", "registry.connect.redhat.com/enterprisedb/cloud-native-postgresql@sha256:d310ece2a75b00bb3da9044f7e4420e199c150be3c7bca6f55c1d99ac1bb6d0d", "--pull-secret-name", "registry-redhat-dockerconfig", "--timeout", "5m")
-		_, err = pkg.RunCommand(operatorsdk)
+	for idx, bundle := range report.AuditCapabilities {
+		operatorsdk := exec.Command("operator-sdk", "run", "bundle", bundle.OperatorBundleImagePath, "--pull-secret-name", "registry-redhat-dockerconfig", "--timeout", "5m")
+		ressss, err := pkg.RunCommand(operatorsdk)
+
 		if err != nil {
 			log.Errorf("Unable to run operator-sdk: %v\n", err)
 		}
+
+		RBLogs := string(ressss[:])
+		report.AuditCapabilities[idx].Capabilities = false
+
+		if strings.Contains(RBLogs, "OLM has successfully installed") {
+			log.Info("Operator Installed Successfully")
+			report.AuditCapabilities[idx].Capabilities = true
+			break
+		}
+	}
+
+	log.Info("Generating output...")
+	if err := report.OutputReport(); err != nil {
+		return err
 	}
 
 	return nil
@@ -197,14 +212,14 @@ func getDataFromIndexDB(report index.Data) (index.Data, error) {
 			log.Errorf("unable to scan data from index %s\n", err.Error())
 		}
 		log.Infof("Generating data from the bundle (%s)", bundleName)
-		auditBundle := models.NewAuditBundle(bundleName, bundlePath)
+		auditCapabilities := models.NewAuditCapabilities(bundleName, bundlePath)
 
-		/*auditBundle = actions.GetDataFromBundleImage(auditBundle, report.Flags.DisableScorecard,
+		/*auditCapabilities = actions.GetDataFromBundleImage(auditCapabilities, report.Flags.DisableScorecard,
 		report.Flags.DisableValidators, report.Flags.ServerMode, report.Flags.Label,
 		report.Flags.LabelValue, flags.ContainerEngine)*/
 
 		sqlString := fmt.Sprintf("SELECT c.channel_name, c.package_name FROM channel_entry c "+
-			"where c.operatorbundle_name = '%s'", auditBundle.OperatorBundleName)
+			"where c.operatorbundle_name = '%s'", auditCapabilities.OperatorBundleName)
 		row, err := db.Query(sqlString)
 		if err != nil {
 			return report, fmt.Errorf("unable to query channel entry in the index db : %s", err)
@@ -215,15 +230,15 @@ func getDataFromIndexDB(report index.Data) (index.Data, error) {
 		var packageName string
 		for row.Next() { // Iterate and fetch the records from result cursor
 			_ = row.Scan(&channelName, &packageName)
-			auditBundle.Channels = append(auditBundle.Channels, channelName)
-			auditBundle.PackageName = packageName
+			auditCapabilities.Channels = append(auditCapabilities.Channels, channelName)
+			auditCapabilities.PackageName = packageName
 		}
 
-		if len(strings.TrimSpace(auditBundle.PackageName)) == 0 && auditBundle.Bundle != nil {
-			auditBundle.PackageName = auditBundle.Bundle.Package
+		if len(strings.TrimSpace(auditCapabilities.PackageName)) == 0 && auditCapabilities.Bundle != nil {
+			auditCapabilities.PackageName = auditCapabilities.Bundle.Package
 		}
 
-		sqlString = fmt.Sprintf("SELECT default_channel FROM package WHERE name = '%s'", auditBundle.PackageName)
+		sqlString = fmt.Sprintf("SELECT default_channel FROM package WHERE name = '%s'", auditCapabilities.PackageName)
 		row, err = db.Query(sqlString)
 		if err != nil {
 			return report, fmt.Errorf("unable to query default channel entry in the index db : %s", err)
@@ -233,11 +248,11 @@ func getDataFromIndexDB(report index.Data) (index.Data, error) {
 		var defaultChannelName string
 		for row.Next() { // Iterate and fetch the records from result cursor
 			_ = row.Scan(&defaultChannelName)
-			auditBundle.DefaultChannel = defaultChannelName
+			auditCapabilities.DefaultChannel = defaultChannelName
 		}
 
 		sqlString = fmt.Sprintf("SELECT type, value FROM properties WHERE operatorbundle_name = '%s'",
-			auditBundle.OperatorBundleName)
+			auditCapabilities.OperatorBundleName)
 		row, err = db.Query(sqlString)
 		if err != nil {
 			return report, fmt.Errorf("unable to query properties entry in the index db : %s", err)
@@ -248,12 +263,12 @@ func getDataFromIndexDB(report index.Data) (index.Data, error) {
 		var properValue string
 		for row.Next() { // Iterate and fetch the records from result cursor
 			_ = row.Scan(&properType, &properValue)
-			auditBundle.PropertiesDB = append(auditBundle.PropertiesDB,
+			auditCapabilities.PropertiesDB = append(auditCapabilities.PropertiesDB,
 				pkg.PropertiesAnnotation{Type: properType, Value: properValue})
 		}
 
 		sqlString = fmt.Sprintf("select count(*) from channel where head_operatorbundle_name = '%s'",
-			auditBundle.OperatorBundleName)
+			auditCapabilities.OperatorBundleName)
 		row, err = db.Query(sqlString)
 		if err != nil {
 			return report, fmt.Errorf("unable to query properties entry in the index db : %s", err)
@@ -263,10 +278,10 @@ func getDataFromIndexDB(report index.Data) (index.Data, error) {
 		var found int
 		for row.Next() { // Iterate and fetch the records from result cursor
 			_ = row.Scan(&found)
-			auditBundle.IsHeadOfChannel = found > 0
+			auditCapabilities.IsHeadOfChannel = found > 0
 		}
 
-		report.AuditBundle = append(report.AuditBundle, *auditBundle)
+		report.AuditCapabilities = append(report.AuditCapabilities, *auditCapabilities)
 	}
 
 	return report, nil
