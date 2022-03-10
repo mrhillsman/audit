@@ -41,6 +41,8 @@ type AuditCapabilities struct {
 	BundleAnnotations       map[string]string `json:"bundleAnnotations,omitempty"`
 	Errors                  []string
 	Capabilities            bool
+	InstallLogs             []string
+	CleanUpLogs             []string
 }
 
 func NewAuditCapabilities(operatorBundleName, operatorBundleImagePath string) *AuditCapabilities {

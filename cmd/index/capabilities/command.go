@@ -159,28 +159,43 @@ func run(cmd *cobra.Command, args []string) error {
 		log.Errorf("Unable to get data from index db: %v\n", err)
 	}
 
+	log.Info("Deploying operator with operator-sdk...")
 	for idx, bundle := range report.AuditCapabilities {
 		operatorsdk := exec.Command("operator-sdk", "run", "bundle", bundle.OperatorBundleImagePath, "--pull-secret-name", "registry-redhat-dockerconfig", "--timeout", "5m")
-		ressss, err := pkg.RunCommand(operatorsdk)
+		runCommand, err := pkg.RunCommand(operatorsdk)
 
 		if err != nil {
-			log.Errorf("Unable to run operator-sdk: %v\n", err)
+			log.Errorf("Unable to run operator-sdk run bundle: %v\n", err)
 		}
 
-		RBLogs := string(ressss[:])
+		RBLogs := string(runCommand[:])
+		report.AuditCapabilities[idx].InstallLogs = append(report.AuditCapabilities[idx].InstallLogs, RBLogs)
 		report.AuditCapabilities[idx].Capabilities = false
 
 		if strings.Contains(RBLogs, "OLM has successfully installed") {
 			log.Info("Operator Installed Successfully")
 			report.AuditCapabilities[idx].Capabilities = true
-			break
 		}
+
+		log.Info("Cleaning up installed Operator:", bundle.PackageName)
+		cleanup := exec.Command("operator-sdk", "cleanup", bundle.PackageName)
+		runCleanup, err := pkg.RunCommand(cleanup)
+		if err != nil {
+			log.Errorf("Unable to run operator-sdk cleanup: %v\n", err)
+		}
+		CLogs := string(runCleanup)
+		report.AuditCapabilities[idx].CleanUpLogs = append(report.AuditCapabilities[idx].CleanUpLogs, CLogs)
 	}
 
 	log.Info("Generating output...")
 	if err := report.OutputReport(); err != nil {
 		return err
 	}
+
+	log.Info("Uploading result to S3")
+	pkg.WriteDataToS3("/Users/yoza/Documents/audit-1/capabilities_quay.io_opdev_audit_tool_operator_index_v0.0.1_2022-03-09.json")
+
+	log.Info("Task Completed!!!!!")
 
 	return nil
 }

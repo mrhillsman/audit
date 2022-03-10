@@ -8,7 +8,9 @@ type Column struct {
 	DefaultChannel  string   `json:"defaultChannel,omitempty"`
 	Channels        []string `json:"bundleChannel,omitempty"`
 	AuditErrors     []string `json:"errors,omitempty"`
-	Capabilities    bool     `json:"capabilities"`
+	Capabilities    bool     `json:"OperatorInstalled"`
+	InstallLogs     []string `json:"InstallLogs"`
+	CleanUpLogs     []string `json:"CleanUpLogs"`
 }
 
 func NewColumn(v models.AuditCapabilities) *Column {
@@ -19,6 +21,8 @@ func NewColumn(v models.AuditCapabilities) *Column {
 	col.Channels = v.Channels
 	col.AuditErrors = v.Errors
 	col.Capabilities = v.Capabilities
+	col.InstallLogs = v.InstallLogs
+	col.CleanUpLogs = v.CleanUpLogs
 
 	return &col
 }

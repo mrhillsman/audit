@@ -26,6 +26,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/blang/semver/v4"
 
 	log "github.com/sirupsen/logrus"
@@ -249,6 +252,28 @@ func ReadFile(file string) ([]byte, error) {
 		return []byte{}, err
 	}
 	return byteValue, err
+}
+
+func WriteDataToS3(file string) error {
+	bucket := "audit-tool-s3-bucket"
+	filename := "audit-capabilities.json"
+	jsonFile, err := os.Open(file)
+	if err != nil {
+		return err
+	}
+	defer jsonFile.Close()
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1")},
+	)
+	uploader := s3manager.NewUploader(sess)
+	_, err = uploader.Upload(&s3manager.UploadInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(filename),
+		// here you pass your reader
+		// the aws sdk will manage all the memory and file reading for you
+		Body: jsonFile,
+	})
+	return err
 }
 
 // IsFollowingChannelNameConventional will check the channels.
