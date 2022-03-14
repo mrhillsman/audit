@@ -54,6 +54,8 @@ func NewCmd() *cobra.Command {
 
 	cmd.Flags().StringVar(&flags.Filter, "filter", "",
 		"filter by the packages names which are like *filter*")
+	cmd.Flags().StringVar(&flags.FilterBundle, "filter-bundle", "",
+		"filter by the Bundle names which are like *filter-bundle*")
 	cmd.Flags().StringVar(&flags.OutputFormat, "output", pkg.JSON,
 		fmt.Sprintf("inform the output format. [Options: %s]", pkg.JSON))
 	cmd.Flags().StringVar(&flags.OutputPath, "output-path", currentPath,
@@ -192,8 +194,8 @@ func run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	log.Info("Uploading result to S3")
-	pkg.WriteDataToS3("/Users/yoza/Documents/audit-1/capabilities_quay.io_opdev_audit_tool_operator_index_v0.0.1_2022-03-09.json")
+	// log.Info("Uploading result to S3")
+	// pkg.WriteDataToS3("/Users/yoza/Documents/audit-1/capabilities_quay.io_opdev_audit_tool_operator_index_v0.0.1_2022-03-09.json")
 
 	log.Info("Task Completed!!!!!")
 

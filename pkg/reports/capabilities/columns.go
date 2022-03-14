@@ -3,6 +3,7 @@ package capabilities
 import "github.com/operator-framework/audit/pkg/models"
 
 type Column struct {
+	BundleName      string   `json:"name"`
 	PackageName     string   `json:"packageName"`
 	BundleImagePath string   `json:"bundleImagePath,omitempty"`
 	DefaultChannel  string   `json:"defaultChannel,omitempty"`
@@ -15,6 +16,7 @@ type Column struct {
 
 func NewColumn(v models.AuditCapabilities) *Column {
 	col := Column{}
+	col.BundleName = v.OperatorBundleName
 	col.PackageName = v.PackageName
 	col.BundleImagePath = v.OperatorBundleImagePath
 	col.DefaultChannel = v.DefaultChannel

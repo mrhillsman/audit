@@ -11,6 +11,7 @@ type BindFlags struct {
 	Label             string `json:"label"`
 	LabelValue        string `json:"labelValue"`
 	Filter            string `json:"filter"`
+	FilterBundle      string `json:"filterBundle"`
 	OutputPath        string `json:"outputPath"`
 	OutputFormat      string `json:"outputFormat"`
 	ContainerEngine   string `json:"containerEngine"`

@@ -3,6 +3,7 @@ package capabilities
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -17,7 +18,28 @@ type Data struct {
 	IndexImageInspect pkg.DockerInspect
 }
 
+func (d *Data) fixPackageNameInconsistency() {
+	for _, auditCapabilities := range d.AuditCapabilities {
+		if auditCapabilities.PackageName == "" {
+			split := strings.Split(auditCapabilities.OperatorBundleImagePath, "/")
+			nm := ""
+			for _, v := range split {
+				if strings.Contains(v, "@") {
+					nm = strings.Split(v, "@")[0]
+					break
+				}
+			}
+			for _, bundle := range d.AuditCapabilities {
+				if strings.Contains(bundle.OperatorBundleImagePath, nm) {
+					auditCapabilities.PackageName = bundle.PackageName
+				}
+			}
+		}
+	}
+}
+
 func (d *Data) PrepareReport() Report {
+	d.fixPackageNameInconsistency()
 
 	var allColumns []Column
 	for _, v := range d.AuditCapabilities {
@@ -75,6 +97,13 @@ func (d *Data) BuildCapabilitiesQuery() (string, error) {
 			"operatorbundle o, channel_entry c")
 		like := "'%" + d.Flags.Filter + "%'"
 		query = query.Where(fmt.Sprintf("c.operatorbundle_name == o.name AND c.package_name like %s", like))
+	}
+
+	if len(d.Flags.FilterBundle) > 0 {
+		query = sq.Select("o.name, o.bundlepath").From(
+			"operatorbundle o, channel_entry c")
+		like := "'%" + d.Flags.FilterBundle + "%'"
+		query = query.Where(fmt.Sprintf("c.operatorbundle_name == o.name AND c.operatorbundle_name like %s", like))
 	}
 
 	query.OrderBy("o.name")
