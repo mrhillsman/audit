@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/operator-framework/audit/pkg"
@@ -80,6 +81,7 @@ func NewCmd() *cobra.Command {
 		fmt.Sprintf("specifies the container tool to use. If not set, the default value is docker. "+
 			"Note that you can use the environment variable CONTAINER_ENGINE to inform this option. "+
 			"[Options: %s and %s]", pkg.Docker, pkg.Podman))
+	cmd.Flags().StringVar(&flags.S3Bucket, "s3-bucket", "audit-tool-s3-bucket", "")
 	// TODO: set defaults (if required) and help text
 	// TODO: how do we handle kubeconfig environment variable
 	cmd.Flags().StringVar(&flags.InstallMode, "install-mode", "", "")
@@ -194,8 +196,14 @@ func run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// log.Info("Uploading result to S3")
-	// pkg.WriteDataToS3("/Users/yoza/Documents/audit-1/capabilities_quay.io_opdev_audit_tool_operator_index_v0.0.1_2022-03-09.json")
+	const reportType = "capabilities"
+	imageName := report.Flags.FilterBundle
+	outputPath := report.Flags.OutputPath
+	filename := pkg.GetReportName(imageName, reportType, "json")
+	path := filepath.Join(outputPath, filename)
+	log.Info(path)
+	log.Info("Uploading result to S3")
+	pkg.WriteDataToS3(path, filename, flags.S3Bucket)
 
 	log.Info("Task Completed!!!!!")
 

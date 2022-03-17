@@ -254,10 +254,9 @@ func ReadFile(file string) ([]byte, error) {
 	return byteValue, err
 }
 
-func WriteDataToS3(file string) error {
-	bucket := "audit-tool-s3-bucket"
-	filename := "audit-capabilities.json"
-	jsonFile, err := os.Open(file)
+func WriteDataToS3(filepath string, filename string, bucketname string) error {
+	// bucket := "audit-tool-s3-bucket"
+	jsonFile, err := os.Open(filepath)
 	if err != nil {
 		return err
 	}
@@ -267,7 +266,7 @@ func WriteDataToS3(file string) error {
 	)
 	uploader := s3manager.NewUploader(sess)
 	_, err = uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(bucket),
+		Bucket: aws.String(bucketname),
 		Key:    aws.String(filename),
 		// here you pass your reader
 		// the aws sdk will manage all the memory and file reading for you

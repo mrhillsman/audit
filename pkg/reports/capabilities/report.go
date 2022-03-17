@@ -19,5 +19,5 @@ func (r *Report) writeJSON() error {
 	}
 
 	const reportType = "capabilities"
-	return pkg.WriteJSON(data, r.Flags.IndexImage, r.Flags.OutputPath, reportType)
+	return pkg.WriteJSON(data, r.Flags.FilterBundle, r.Flags.OutputPath, reportType)
 }
