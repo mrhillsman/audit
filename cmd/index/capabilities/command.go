@@ -165,7 +165,7 @@ func run(cmd *cobra.Command, args []string) error {
 
 	log.Info("Deploying operator with operator-sdk...")
 	for idx, bundle := range report.AuditCapabilities {
-		operatorsdk := exec.Command("operator-sdk", "run", "bundle", bundle.OperatorBundleImagePath, "--pull-secret-name", "registry-redhat-dockerconfig", "--timeout", "5m")
+		operatorsdk := exec.Command("operator-sdk", "run", "bundle", bundle.OperatorBundleImagePath, "--pull-secret-name", "registry-pull-secret", "--timeout", "5m")
 		runCommand, err := pkg.RunCommand(operatorsdk)
 
 		if err != nil {
