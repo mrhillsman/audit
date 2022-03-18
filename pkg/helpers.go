@@ -27,9 +27,11 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/blang/semver/v4"
+	"github.com/gobuffalo/envy"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -254,6 +256,23 @@ func ReadFile(file string) ([]byte, error) {
 	return byteValue, err
 }
 
+// type MyProvider struct{
+// }
+
+// type MyValue credentials.Value
+
+// func (m *MyProvider) Retrieve() (credentials.Value,error){
+// 	var testConfig credentials.Value
+// 	testConfig = MyValue{
+// 		AccessKeyID: "acu9aj4aexaizah3ooceiz4u",
+// 		SecretAccessKey: "vohteeva3yah3boohied4miz",
+// 	}
+// 	return testConfig, nil
+// }
+// func (m *MyProvider) IsExpired() bool {
+// 	return false
+// }
+
 func WriteDataToS3(filepath string, filename string, bucketname string) error {
 	// bucket := "audit-tool-s3-bucket"
 	jsonFile, err := os.Open(filepath)
@@ -262,8 +281,12 @@ func WriteDataToS3(filepath string, filename string, bucketname string) error {
 	}
 	defer jsonFile.Close()
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-east-1")},
-	)
+		Endpoint:         aws.String("http://operator-audit-minio.apps.eng.opdev.io"),
+		Region:           aws.String("us-east-1"),
+		Credentials:      credentials.NewStaticCredentials(envy.Get("AccessKeyID", ""), envy.Get("SecretAccessKey", ""), ""),
+		DisableSSL:       aws.Bool(true),
+		S3ForcePathStyle: aws.Bool(true),
+	})
 	uploader := s3manager.NewUploader(sess)
 	_, err = uploader.Upload(&s3manager.UploadInput{
 		Bucket: aws.String(bucketname),
