@@ -281,7 +281,7 @@ func WriteDataToS3(filepath string, filename string, bucketname string) error {
 	}
 	defer jsonFile.Close()
 	sess, err := session.NewSession(&aws.Config{
-		Endpoint:         aws.String("http://operator-audit-minio.apps.eng.opdev.io"),
+		Endpoint:         aws.String(envy.Get("Endpoint", "")),
 		Region:           aws.String("us-east-1"),
 		Credentials:      credentials.NewStaticCredentials(envy.Get("AccessKeyID", ""), envy.Get("SecretAccessKey", ""), ""),
 		DisableSSL:       aws.Bool(true),
